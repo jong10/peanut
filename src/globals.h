@@ -1,13 +1,6 @@
 #ifndef _PEANUT_GLOBALS_H_
 #define _PEANUT_GLOBALS_H_
 
-#ifdef GLOBAL
-    #define EXTERN
-#else
-    #define EXTERN extern
-#endif
-
-
 #include <stdio.h>
 
 //#define YYSTYPE pn_node*
@@ -45,15 +38,15 @@
 #define PROTONAME_TRUE "true"
 #define PROTONAME_FALSE "false"
 
-#define IS_NOT_INITIALIZED(x)    ((x)->type == TYPE_NOT_INITIALIZED)
-#define IS_NULL(x)        ((x)->type == TYPE_NULL)
-#define IS_INTEGER(x)    ((x)->type == TYPE_INTEGER)
-#define IS_REAL(x)        ((x)->type == TYPE_REAL)
-#define IS_STRING(x)    ((x)->type == TYPE_STRING)
-#define IS_BOOL(x)        ((x)->type == TYPE_BOOL)
-#define IS_OBJECT(x)    ((x)->type == TYPE_OBJECT)
-#define IS_NATIVE(x)    ((x)->type == TYPE_NATIVE)
-#define IS_FUNCTION(x)    ((x)->type == TYPE_FUNCTION)
+#define IS_NOT_INITIALIZED(x)   ((x)->type == TYPE_NOT_INITIALIZED)
+#define IS_NULL(x)              ((x)->type == TYPE_NULL)
+#define IS_INTEGER(x)           ((x)->type == TYPE_INTEGER)
+#define IS_REAL(x)              ((x)->type == TYPE_REAL)
+#define IS_STRING(x)            ((x)->type == TYPE_STRING)
+#define IS_BOOL(x)              ((x)->type == TYPE_BOOL)
+#define IS_OBJECT(x)            ((x)->type == TYPE_OBJECT)
+#define IS_NATIVE(x)            ((x)->type == TYPE_NATIVE)
+#define IS_FUNCTION(x)          ((x)->type == TYPE_FUNCTION)
 
 #undef TYPE_BOOL
 
@@ -205,8 +198,5 @@ typedef struct _pn_node {
         } return_stmt;
 //    } node;
 } pn_node;
-
-// global variables
-EXTERN pn_node* peanut_tree;
 
 #endif//_PEANUT__GLOBALS_H_

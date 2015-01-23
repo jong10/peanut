@@ -1,13 +1,10 @@
 %{
-    #define GLOBAL
     #include "globals.h"
-    #undef GLOBAL
 
     #include <stdlib.h>
     #include <ctype.h>
     #include <string.h>
     #include <stdbool.h>
-    #include "eval.h"
     #include "api.h"
 
     #define YYDEBUG 1
@@ -19,6 +16,7 @@
 
     //extern char token_string[MAX_TOKEN_LENGTH];
 
+    pn_node *peanut_tree;
     pn_node **tree_nodes;
     //int len_tree_nodes = 0;
 
@@ -43,6 +41,7 @@
     static pn_hash_item *new_hash_item(pn_node *key, pn_node *value);
     static pn_hash_item *add_hash_item_to_last(pn_hash_item *item, pn_hash_item *next);
     static pn_node *new_for_stmt(pn_node *var, pn_node *expression, pn_node *stmt_list);
+    static void print_pn_tree(int depth, pn_node *node);
 %}
 
 %union {
@@ -672,7 +671,10 @@ pn_object *Peanut_EvalFromFile(char *filename, pn_world *world, bool trace)
         //world->tree_nodes = tree_nodes;
         //world->len_tree_nodes = len_tree_nodes;
         //return Eval_ExecuteTree(world, world->tree, trace);
-        return Eval_ExecuteTree(world, peanut_tree, trace);
+        // v2.0
+        //return Eval_ExecuteTree(world, peanut_tree, trace);
+	print_pn_tree(0, peanut_tree);
+        return NULL;
     } else {
         yyclearin;
         yyerrok;
@@ -700,7 +702,9 @@ pn_object *Peanut_EvalFromString(char *code, pn_world *world, bool trace)
         //world->tree_nodes = tree_nodes;
         //world->len_tree_nodes = len_tree_nodes;
         //return Eval_ExecuteTree(world, world->tree, trace);
-        return Eval_ExecuteTree(world, peanut_tree, trace);
+        // v2.0
+        //return Eval_ExecuteTree(world, peanut_tree, trace);
+        return NULL;
     } else {
         //free(tree_nodes);
         return NULL;
@@ -729,16 +733,16 @@ int yyerror(char *msg)
     return 0;
 }
 
-pn_node nodes[100000];
-int node_index = 0;
+//pn_node nodes[100000];
+//int node_index = 0;
 
 /**
  * create a node
  */
 static pn_node *new_node(enum node_type node_type)
 {
-    //pn_node *node = (pn_node *)malloc(sizeof(pn_node));
-    pn_node *node = &nodes[node_index++];
+    pn_node *node = (pn_node *)malloc(sizeof(pn_node));
+    //pn_node *node = &nodes[node_index++];
 
     //FIXME: need debug
     //tree_nodes[len_tree_nodes++] = node;
@@ -891,4 +895,179 @@ static pn_node *new_for_stmt(pn_node *var, pn_node *expression, pn_node *stmt_li
     //free(var);
 
     return node;
+}
+
+static char *node_type_names[] = {
+    "LITERAL",
+    "VAR_NAME",
+    "LIST",
+    "HASH",
+    "EXPRESSION",
+    "IF_STMT",
+    "WHILE_STMT",
+    "FOR_STMT",
+    "IMPORT_STMT",
+    "LAMBDA",
+    "DEF_FUNC",
+    "DEF_CLASS",
+    "RETURN_STMT",
+    "MAX_COUNT",
+    "EMPTY",
+};
+
+static void print_depth(int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+}
+
+static void print_literal(pn_object *obj) {
+    switch (obj->type) {
+    case TYPE_NOT_INITIALIZED:
+        printf("not_initialized");
+        break;
+    case TYPE_NULL:
+        printf("null");
+        break;
+    case TYPE_INTEGER:
+        printf("%d", obj->val.int_val);
+        break;
+    case TYPE_REAL:
+        printf("%f", obj->val.real_val);
+        break;
+    case TYPE_STRING:
+        printf("%s", obj->val.str_val);
+        break;
+    case TYPE_BOOL:
+        printf("%s", (obj->val.bool_val) ? "true" : "false");
+        break;
+    case TYPE_OBJECT:
+        printf("(object:%p)", obj);
+        break;
+    case TYPE_NATIVE:
+        printf("(native:%p)", obj);
+        break;
+    case TYPE_FUNCTION:
+        printf("(function:%p)", obj);
+        break;
+    default:
+        printf("error: %d", obj->type);
+    }
+}
+
+static void print_header(int depth, pn_node *node) {
+    if (!node) {
+        return;
+    }
+    print_depth(depth);
+    printf("<%p>", node);
+    printf("  %-12s ", node_type_names[node->node_type]);
+}
+
+static void print_pn_tree(int depth, pn_node *node) {
+    if (!node) {
+        return;
+    }
+
+    switch (node->node_type) {
+    case NODE_LITERAL:
+        print_header(depth, node);
+        print_literal(&node->value);
+        printf("\n");
+        break;
+    case NODE_VAR_NAME:
+        print_header(depth, node);
+        printf("var[%s]\n", node->var_name);
+        break;
+    case NODE_LIST:
+        print_header(depth, node);
+        printf("(list)\n");
+        print_pn_tree(depth + 1, node->list_items);
+        break;
+    case NODE_HASH:
+        print_header(depth, node);
+        printf("(hash)\n");
+        print_pn_tree(depth + 1, node->hash_items->key);
+        print_pn_tree(depth + 1, node->hash_items->value);
+        // TODO next_item
+        break;
+    case NODE_EXPRESSION:
+        print_header(depth, node);
+        printf("expr[%s]\n", node->expr.func_name);
+        print_pn_tree(depth + 1, node->expr.object);
+        print_pn_tree(depth + 1, node->expr.params);
+        break;
+    case NODE_IF_STMT:
+        print_header(depth, node);
+        printf("(if)\n");
+        print_pn_tree(depth + 1, node->if_stmt.expr);
+        print_header(depth, node);
+        printf("(stmt)\n");
+        print_pn_tree(depth + 1, node->if_stmt.stmt_list);
+        print_header(depth, node);
+        printf("(next)\n");
+        print_pn_tree(depth + 1, node->if_stmt.next);
+        break;
+    case NODE_WHILE_STMT:
+        print_header(depth, node);
+        printf("(while-expr)\n");
+        print_pn_tree(depth + 1, node->while_stmt.expr);
+        print_header(depth, node);
+        printf("(while-stmt)\n");
+        print_pn_tree(depth + 1, node->while_stmt.stmt_list);
+        break;
+    case NODE_FOR_STMT:
+        print_header(depth, node);
+        printf("for[var=%s]\n", node->for_stmt.var_name);
+        print_pn_tree(depth + 1, node->for_stmt.expr);
+        print_header(depth, node);
+        printf("(for-stmt)\n");
+        print_pn_tree(depth + 1, node->for_stmt.stmt_list);
+        break;
+    case NODE_LAMBDA:
+        print_header(depth, node);
+        printf("(lambda-var)\n");
+        print_pn_tree(depth + 1, node->lambda.simple_var_list);
+        print_header(depth, node);
+        printf("(lambda-stmt)\n");
+        print_pn_tree(depth + 1, node->lambda.stmt_list);
+        break;
+    case NODE_DEF_FUNC:
+        print_header(depth, node);
+        printf("def[%s]\n", node->def_func.func_id);
+        print_header(depth, node);
+        printf("(parameters)\n");
+        print_pn_tree(depth + 1, node->def_func.simple_var_list);
+        print_header(depth, node);
+        printf("(statements)\n");
+        print_pn_tree(depth + 1, node->def_func.stmt_list);
+        print_header(depth, node);
+        printf("enddef[%s]\n", node->def_func.func_id);
+        break;
+    case NODE_DEF_CLASS:
+        print_header(depth, node);
+        printf("class[%s]\n", node->def_class.name);
+        print_header(depth, node);
+        printf("(super)\n");
+        print_pn_tree(depth + 1, node->def_class.super_list);
+        print_header(depth, node);
+        printf("(functions)\n");
+        print_pn_tree(depth + 1, node->def_class.func_list);
+        break;
+    case NODE_RETURN_STMT:
+        print_header(depth, node);
+        printf("(return)\n");
+        print_pn_tree(depth + 1, node->return_stmt.expr);
+        break;
+    case NODE_MAX_COUNT:
+        printf("\n");
+        break;
+    default:
+        printf("error: %d", node->node_type);
+    }
+
+    // next
+    if (node->sibling) {
+        print_pn_tree(depth, node->sibling);
+    }
 }

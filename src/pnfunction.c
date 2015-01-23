@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "eval.h"
 
 pn_object *PnFunction_CreateByNative(pn_world *world, pn_function_native func_body)
 {
@@ -52,7 +51,8 @@ pn_object *PnFunction_ExecuteByFuncObject(pn_object* pn_func, pn_world *world, p
         else
             PN_FAIL("bad pn_func");
 
-        value = execute_statements(world, stmt_list);
+        // TODO removed eval.c
+        //value = execute_statements(world, stmt_list);
     } else {
         fprintf(stderr, "pn_func->type = %d\n", pn_func->type);
         PN_FAIL("never run here");

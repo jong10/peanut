@@ -33,7 +33,6 @@ OBJS= \
 	$(BUILD)/lex.yy.o \
 	$(BUILD)/peanut.tab.o \
 	$(BUILD)/world.o \
-	$(BUILD)/eval.o \
 	$(BUILD)/hash.o \
 	$(BUILD)/list.o \
 	$(BUILD)/stack.o \

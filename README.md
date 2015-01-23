@@ -1,11 +1,12 @@
-Peanut
-======
+Peanut 2.0
+==========
 
-Peanut is a simple programming language, using flex/bison.
+Peanut 2.0 is under development. Peanut is a simple programming language, using flex/bison.
 Peanut is hosted at [http://github.com/peanut-lang/peanut][Repository] under
 [MIT License][]. You can download the source code with the following command.
 
     $ git clone git://github.com/peanut-lang/peanut.git
+    $ git checkout v2.0
 
 and, you can build and run samples.
 
